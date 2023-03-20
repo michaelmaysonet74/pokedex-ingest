@@ -11,5 +11,6 @@ object Dependencies {
   lazy val calibanClient = "com.github.ghostdogpr" %% "caliban-client" % calibanVersion
   lazy val weePickle = "com.rallyhealth" %% "weepickle-v1" % "1.8.0"
   lazy val mongoDb = "org.mongodb.scala" %% "mongo-scala-driver" % "4.9.0"
+  lazy val enumeratum = "com.beachape" %% "enumeratum" % "1.7.2"
 
 }

@@ -18,6 +18,7 @@ lazy val root = (project in file("."))
       mongoDb,
       calibanClient,
       weePickle,
+      enumeratum,
       ws
     ),
     playDefaultPort := 9000

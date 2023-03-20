@@ -22,7 +22,9 @@ class IngestServiceImpl(
     getBatchPokemonById(start, end).flatMap { pokemons =>
       Future
         .sequence(pokemons.map(convert).map(pokedexRepo.insert))
-        .map(_.reduce((b1, b2) => b1 && b2))
+        .map { results =>
+          results.foldLeft(true) { case (acc, c) => acc && c }
+        }
     }
 
   private def getBatchPokemonById(start: Int, end: Int): Future[List[PokemonById]] =
@@ -36,16 +38,18 @@ class IngestServiceImpl(
   private def getPokemonById(id: Int): Future[Option[PokemonById]] =
     pokedexClient.getPokemonById(id.toString)
 
-  private def convert(pokemonById: PokemonById): PokemonRecord = PokemonRecord(
-    id = pokemonById.id,
-    name = pokemonById.name,
-    entry = pokemonById.entry,
-    types = pokemonById.types,
-    measurement = pokemonById.measurement,
-    abilities = pokemonById.abilities,
-    sprite = pokemonById.sprite,
-    isMonoType = pokemonById.isMonoType,
-    weaknesses = pokemonById.weaknesses
-  )
+  private def convert(pokemonById: PokemonById): PokemonRecord =
+    PokemonRecord(
+      id = pokemonById.id.toInt,
+      name = pokemonById.name,
+      entry = pokemonById.entry,
+      types = pokemonById.types.map(_.collect { case Some(pokemonType) => pokemonType.value }),
+      measurement = pokemonById.measurement,
+      abilities = pokemonById.abilities.map(_.collect { case Some(ability) => ability }),
+      sprite = pokemonById.sprite,
+      evolution = pokemonById.evolution,
+      isMonoType = pokemonById.isMonoType,
+      weaknesses = pokemonById.weaknesses.map(_.collect { case Some(weakness) => weakness.value })
+    )
 
 }
