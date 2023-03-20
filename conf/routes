@@ -3,7 +3,4 @@
 # https://www.playframework.com/documentation/latest/ScalaRouting
 # ~~~~
 
-GET     /rest/status                controllers.TemplateController.getStatus(url: String)
-GET     /rest/countries/:code       controllers.CountriesController.getCountryByCode(code: String)
-
-->      /graphql                    controllers.GraphQLController
+POST     /rest/ingest   controllers.IngestController.ingest()

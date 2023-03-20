@@ -10,13 +10,12 @@ ThisBuild / organizationName := "michaelmaysonet74"
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, CalibanPlugin)
   .settings(
-    name := """play-framework-template-with-gql""",
+    name := """pokedex-ingest""",
     libraryDependencies ++= Seq(
       scalaTest % Test,
       macwireMacros % Provided,
       macwireUtil,
-      calibanLib,
-      calibanPlay,
+      mongoDb,
       calibanClient,
       weePickle,
       ws
