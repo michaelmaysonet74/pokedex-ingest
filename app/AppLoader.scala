@@ -1,8 +1,7 @@
 package loader
 
-import akka.stream.Materializer
 import com.softwaremill.macwire.wire
-import modules.{CountriesModule, GraphQLModule, TemplateModule}
+import modules.IngestModule
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.libs.ws.ahc.AhcWSComponents
@@ -28,11 +27,7 @@ class AppComponents(
 ) extends BuiltInComponentsFromContext(context)
     with AhcWSComponents
     with HttpFiltersComponents
-    with TemplateModule
-    with CountriesModule
-    with GraphQLModule {
-
-  override implicit def mat: Materializer = materializer
+    with IngestModule {
 
   implicit lazy val ec: ExecutionContext = actorSystem.dispatcher
   implicit lazy val logger: Logger = Logger("application")
