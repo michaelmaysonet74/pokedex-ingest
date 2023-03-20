@@ -1,4 +1,4 @@
-# pokedex-ingest
+# poke-dex-ingest
 
 ## Getting Started
 
