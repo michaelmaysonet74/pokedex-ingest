@@ -1,5 +1,5 @@
 # poke-dex-ingest
-Pokedex to MongoDB Ingest Job
+Pokedex to MongoDB Ingestion Job
 
 ## Getting Started
 
