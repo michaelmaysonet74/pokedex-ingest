@@ -12,11 +12,29 @@ final case class PokemonById(
   sprite: Option[String],
   evolution: Option[EvolutionChain],
   isMonoType: Option[Boolean],
-  weaknesses: Option[List[Option[PokemonType]]]
+  weaknesses: Option[List[Option[PokemonType]]],
+  baseStats: Option[BaseStats]
 )
 
 object PokemonById {
 
   implicit val decoder: To[PokemonById] = macroTo[PokemonById]
+
+  def apply(
+    id: String,
+    baseStats: Option[BaseStats]
+  ): PokemonById = PokemonById(
+    id = id,
+    name = None,
+    entry = None,
+    types = None,
+    measurement = None,
+    abilities = None,
+    sprite = None,
+    evolution = None,
+    isMonoType = None,
+    weaknesses = None,
+    baseStats = baseStats
+  )
 
 }

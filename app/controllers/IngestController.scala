@@ -25,7 +25,8 @@ class IngestController(
         ingestService
           .ingest(
             start = ingestRequest.startPokemonId,
-            end = ingestRequest.endPokemonId
+            end = ingestRequest.endPokemonId,
+            operation = ingestRequest.operation
           )
           .map { success =>
             Ok(FromScala(IngestResponse(success)).transform(ToJson.string)).as(JSON)

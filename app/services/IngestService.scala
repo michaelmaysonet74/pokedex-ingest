@@ -7,7 +7,7 @@ import repositories.PokedexRepo
 import scala.concurrent.{ExecutionContext, Future}
 
 trait IngestService {
-  def ingest(start: Int, end: Int): Future[Boolean]
+  def ingest(start: Int, end: Int, operation: Option[String]): Future[Boolean]
 
 }
 
@@ -18,8 +18,14 @@ class IngestServiceImpl(
   ec: ExecutionContext
 ) extends IngestService {
 
-  override def ingest(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end).flatMap { pokemons =>
+  override def ingest(start: Int, end: Int, operation: Option[String]): Future[Boolean] =
+    operation match {
+      case Some("updateBaseStats") => updateBatchPokemonBaseStatsById(start, end)
+      case _                       => insertBatchPokemonById(start, end)
+    }
+
+  private def insertBatchPokemonById(start: Int, end: Int): Future[Boolean] =
+    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
       Future
         .sequence(pokemons.map(convert).map(pokedexRepo.insert))
         .map { results =>
@@ -27,8 +33,21 @@ class IngestServiceImpl(
         }
     }
 
-  private def getBatchPokemonById(start: Int, end: Int): Future[List[PokemonById]] =
-    Future.sequence((start to end).map(getPokemonById).toList).map { batchPokemonById =>
+  private def updateBatchPokemonBaseStatsById(start: Int, end: Int): Future[Boolean] =
+    getBatchPokemonById(start, end, getPokemonBaseStatsById).flatMap { pokemons =>
+      Future
+        .sequence(pokemons.map(convert).map(pokedexRepo.updateBaseStats))
+        .map { results =>
+          results.foldLeft(true) { case (acc, c) => acc && c }
+        }
+    }
+
+  private def getBatchPokemonById(
+    start: Int,
+    end: Int,
+    fetch: Int => Future[Option[PokemonById]]
+  ): Future[List[PokemonById]] =
+    Future.sequence((start to end).map(fetch).toList).map { batchPokemonById =>
       for {
         maybePokemonById <- batchPokemonById
         pokemonById <- maybePokemonById
@@ -37,6 +56,9 @@ class IngestServiceImpl(
 
   private def getPokemonById(id: Int): Future[Option[PokemonById]] =
     pokedexClient.getPokemonById(id.toString)
+
+  private def getPokemonBaseStatsById(id: Int): Future[Option[PokemonById]] =
+    pokedexClient.getPokemonBaseStatsById(id.toString)
 
   private def convert(pokemonById: PokemonById): PokemonRecord =
     PokemonRecord(
@@ -49,7 +71,8 @@ class IngestServiceImpl(
       sprite = pokemonById.sprite,
       evolution = pokemonById.evolution,
       isMonoType = pokemonById.isMonoType,
-      weaknesses = pokemonById.weaknesses.map(_.collect { case Some(weakness) => weakness.value })
+      weaknesses = pokemonById.weaknesses.map(_.collect { case Some(weakness) => weakness.value }),
+      baseStats = pokemonById.baseStats
     )
 
 }
