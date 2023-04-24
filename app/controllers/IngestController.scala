@@ -2,7 +2,7 @@ package controllers
 
 import com.rallyhealth.weejson.v1.jackson.{FromJson, ToJson}
 import com.rallyhealth.weepickle.v1.WeePickle.{FromScala, ToScala}
-import models.{IngestRequest, IngestResponse}
+import models.{IngestOperation, IngestRequest, IngestResponse}
 import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.mvc.{AbstractController, Action, ControllerComponents}
@@ -29,7 +29,14 @@ class IngestController(
             operation = ingestRequest.operation
           )
           .map { success =>
-            Ok(FromScala(IngestResponse(success)).transform(ToJson.string)).as(JSON)
+            Ok(
+              FromScala(
+                IngestResponse(
+                  success = success,
+                  operation = ingestRequest.operation.getOrElse(IngestOperation.InsertAll)
+                )
+              ).transform(ToJson.string)
+            ).as(JSON)
           }
       case _ => Future.successful(BadRequest)
     }

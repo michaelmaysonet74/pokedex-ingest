@@ -1,13 +1,18 @@
 package services
 
 import clients.PokedexClient
-import models.{PokemonById, PokemonRecord}
+import models.{IngestOperation, PokemonById, PokemonRecord}
 import repositories.PokedexRepo
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait IngestService {
-  def ingest(start: Int, end: Int, operation: Option[String]): Future[Boolean]
+
+  def ingest(
+    start: Int,
+    end: Int,
+    operation: Option[IngestOperation]
+  ): Future[Boolean]
 
 }
 
@@ -18,10 +23,10 @@ class IngestServiceImpl(
   ec: ExecutionContext
 ) extends IngestService {
 
-  override def ingest(start: Int, end: Int, operation: Option[String]): Future[Boolean] =
+  override def ingest(start: Int, end: Int, operation: Option[IngestOperation]): Future[Boolean] =
     operation match {
-      case Some("updateBaseStats") => updateBatchPokemonBaseStatsById(start, end)
-      case _                       => insertBatchPokemonById(start, end)
+      case Some(IngestOperation.UpdateBaseStats) => updateBatchPokemonBaseStatsById(start, end)
+      case _                                     => insertBatchPokemonById(start, end)
     }
 
   private def insertBatchPokemonById(start: Int, end: Int): Future[Boolean] =
