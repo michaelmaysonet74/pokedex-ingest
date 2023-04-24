@@ -25,7 +25,7 @@ class IngestController(
         ingestService
           .ingest(
             start = ingestRequest.startPokemonId,
-            end = ingestRequest.endPokemonId,
+            end = ingestRequest.endPokemonId.getOrElse(ingestRequest.startPokemonId),
             operation = ingestRequest.operation
           )
           .map { success =>
