@@ -55,16 +55,16 @@ object PokemonRecord {
 
   private def getGeneration(pokemonId: Int): Option[Int] =
     pokemonId match {
-      case 1 to 151    => Some(1)
-      case 152 to 251  => Some(2)
-      case 252 to 386  => Some(3)
-      case 387 to 493  => Some(4)
-      case 494 to 649  => Some(5)
-      case 650 to 721  => Some(6)
-      case 722 to 809  => Some(7)
-      case 810 to 905  => Some(8)
-      case 906 to 1010 => Some(9)
-      case _           => None
+      case id if 1 to 151 contains id    => Some(1)
+      case id if 152 to 251 contains id  => Some(2)
+      case id if 252 to 386 contains id  => Some(3)
+      case id if 387 to 493 contains id  => Some(4)
+      case id if 494 to 649 contains id  => Some(5)
+      case id if 650 to 721 contains id  => Some(6)
+      case id if 722 to 809 contains id  => Some(7)
+      case id if 810 to 905 contains id  => Some(8)
+      case id if 906 to 1010 contains id => Some(9)
+      case _                             => None
     }
 
   val codecRegistry: CodecRegistry =
