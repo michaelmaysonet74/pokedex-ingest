@@ -17,7 +17,9 @@ final case class PokemonRecord(
   sprite: Option[String],
   evolution: Option[EvolutionChain],
   isMonoType: Boolean,
-  weaknesses: Option[List[String]]
+  weaknesses: Option[List[String]],
+  generation: Option[Int],
+  baseStats: Option[BaseStats]
 )
 
 object PokemonRecord {
@@ -32,7 +34,8 @@ object PokemonRecord {
     sprite: Option[String],
     evolution: Option[EvolutionChain],
     isMonoType: Option[Boolean],
-    weaknesses: Option[List[String]]
+    weaknesses: Option[List[String]],
+    baseStats: Option[BaseStats]
   ): PokemonRecord =
     PokemonRecord(
       _id = new ObjectId(),
@@ -45,8 +48,24 @@ object PokemonRecord {
       sprite = sprite,
       evolution = evolution,
       isMonoType = isMonoType.getOrElse(false),
-      weaknesses = weaknesses
+      weaknesses = weaknesses,
+      generation = getGeneration(id),
+      baseStats = baseStats
     )
+
+  private def getGeneration(pokemonId: Int): Option[Int] =
+    pokemonId match {
+      case id if 1 to 151 contains id    => Some(1)
+      case id if 152 to 251 contains id  => Some(2)
+      case id if 252 to 386 contains id  => Some(3)
+      case id if 387 to 493 contains id  => Some(4)
+      case id if 494 to 649 contains id  => Some(5)
+      case id if 650 to 721 contains id  => Some(6)
+      case id if 722 to 809 contains id  => Some(7)
+      case id if 810 to 905 contains id  => Some(8)
+      case id if 906 to 1010 contains id => Some(9)
+      case _                             => None
+    }
 
   val codecRegistry: CodecRegistry =
     fromRegistries(
@@ -56,7 +75,8 @@ object PokemonRecord {
         classOf[Measurement],
         classOf[Ability],
         classOf[EvolutionChain],
-        classOf[Evolution]
+        classOf[Evolution],
+        classOf[BaseStats]
       ),
       DEFAULT_CODEC_REGISTRY
     )

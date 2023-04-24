@@ -214,6 +214,12 @@ object PokedexSchema {
   type Evolution
   object Evolution {
 
+    final case class EvolutionView(id: scala.Option[String], name: scala.Option[String])
+
+    type ViewSelection = SelectionBuilder[Evolution, EvolutionView]
+
+    def view: ViewSelection = (id ~ name).map { case (id, name) => EvolutionView(id, name) }
+
     /** Pokemon's id, can match pokedex number (not always).
       */
     def id: SelectionBuilder[Evolution, scala.Option[String]] =
@@ -227,6 +233,20 @@ object PokedexSchema {
 
   type Ability
   object Ability {
+
+    final case class AbilityView(
+      name: scala.Option[String],
+      effect: scala.Option[String],
+      isHidden: scala.Option[Boolean]
+    )
+
+    type ViewSelection = SelectionBuilder[Ability, AbilityView]
+
+    def view(effectLanguage: scala.Option[Language] = None): ViewSelection =
+      (name ~ effect(effectLanguage) ~ isHidden).map { case (name, effect, isHidden) =>
+        AbilityView(name, effect, isHidden)
+      }
+
     def name: SelectionBuilder[Ability, scala.Option[String]] =
       _root_.caliban.client.SelectionBuilder.Field("name", OptionOf(Scalar()))
     def effect(language: scala.Option[Language] = None)(implicit
@@ -237,8 +257,60 @@ object PokedexSchema {
       _root_.caliban.client.SelectionBuilder.Field("isHidden", OptionOf(Scalar()))
   }
 
+  type BaseStats
+  object BaseStats {
+
+    final case class BaseStatsView(
+      hp: Int,
+      attack: Int,
+      defense: Int,
+      specialAttack: Int,
+      specialDefense: Int,
+      speed: Int
+    )
+
+    type ViewSelection = SelectionBuilder[BaseStats, BaseStatsView]
+
+    def view: ViewSelection = (hp ~ attack ~ defense ~ specialAttack ~ specialDefense ~ speed).map {
+      case (hp, attack, defense, specialAttack, specialDefense, speed) =>
+        BaseStatsView(hp, attack, defense, specialAttack, specialDefense, speed)
+    }
+
+    /** Pokemon's base HP
+      */
+    def hp: SelectionBuilder[BaseStats, Int] = _root_.caliban.client.SelectionBuilder.Field("hp", Scalar())
+
+    /** Pokemon's base Attack
+      */
+    def attack: SelectionBuilder[BaseStats, Int] = _root_.caliban.client.SelectionBuilder.Field("attack", Scalar())
+
+    /** Pokemon's base Defense
+      */
+    def defense: SelectionBuilder[BaseStats, Int] = _root_.caliban.client.SelectionBuilder.Field("defense", Scalar())
+
+    /** Pokemon's base Special Attack
+      */
+    def specialAttack: SelectionBuilder[BaseStats, Int] =
+      _root_.caliban.client.SelectionBuilder.Field("specialAttack", Scalar())
+
+    /** Pokemon's base Special Defense
+      */
+    def specialDefense: SelectionBuilder[BaseStats, Int] =
+      _root_.caliban.client.SelectionBuilder.Field("specialDefense", Scalar())
+
+    /** Pokemon's base Speed
+      */
+    def speed: SelectionBuilder[BaseStats, Int] = _root_.caliban.client.SelectionBuilder.Field("speed", Scalar())
+  }
+
   type EvolutionFrom
   object EvolutionFrom {
+
+    final case class EvolutionFromView(id: scala.Option[String], name: scala.Option[String])
+
+    type ViewSelection = SelectionBuilder[EvolutionFrom, EvolutionFromView]
+
+    def view: ViewSelection = (id ~ name).map { case (id, name) => EvolutionFromView(id, name) }
 
     /** Pokemon's id, can match pokedex number (not always).
       */
@@ -254,6 +326,14 @@ object PokedexSchema {
   type EvolutionChain
   object EvolutionChain {
 
+    final case class EvolutionChainView[FromSelection](from: scala.Option[FromSelection])
+
+    type ViewSelection[FromSelection] = SelectionBuilder[EvolutionChain, EvolutionChainView[FromSelection]]
+
+    def view[FromSelection](
+      fromSelection: SelectionBuilder[EvolutionFrom, FromSelection]
+    ): ViewSelection[FromSelection] = from(fromSelection).map(from => EvolutionChainView(from))
+
     /** Represents a Pokemon which it evolves from in the chain.
       */
     def from[A](innerSelection: SelectionBuilder[EvolutionFrom, A]): SelectionBuilder[EvolutionChain, scala.Option[A]] =
@@ -262,6 +342,12 @@ object PokedexSchema {
 
   type Measurement
   object Measurement {
+
+    final case class MeasurementView(height: scala.Option[String], weight: scala.Option[String])
+
+    type ViewSelection = SelectionBuilder[Measurement, MeasurementView]
+
+    def view: ViewSelection = (height ~ weight).map { case (height, weight) => MeasurementView(height, weight) }
 
     /** Entity's height
       */
@@ -276,6 +362,71 @@ object PokedexSchema {
 
   type Pokemon
   object Pokemon {
+
+    final case class PokemonView[AbilitiesSelection, MeasurementSelection, EvolutionSelection, BaseStatsSelection](
+      id: String,
+      name: scala.Option[String],
+      moves: scala.Option[List[scala.Option[String]]],
+      types: scala.Option[List[scala.Option[PokemonType]]],
+      abilities: scala.Option[List[scala.Option[AbilitiesSelection]]],
+      measurement: scala.Option[MeasurementSelection],
+      isMonoType: scala.Option[Boolean],
+      entry: scala.Option[String],
+      sprite: scala.Option[String],
+      evolution: scala.Option[EvolutionSelection],
+      weaknesses: scala.Option[List[scala.Option[PokemonType]]],
+      baseStats: scala.Option[BaseStatsSelection]
+    )
+
+    type ViewSelection[AbilitiesSelection, MeasurementSelection, EvolutionSelection, BaseStatsSelection] =
+      SelectionBuilder[
+        Pokemon,
+        PokemonView[AbilitiesSelection, MeasurementSelection, EvolutionSelection, BaseStatsSelection]
+      ]
+
+    def view[AbilitiesSelection, MeasurementSelection, EvolutionSelection, BaseStatsSelection](
+      entryLanguage: scala.Option[Language] = None,
+      entryVersion: scala.Option[GameVersion] = None
+    )(
+      abilitiesSelection: SelectionBuilder[Ability, AbilitiesSelection],
+      measurementSelection: SelectionBuilder[Measurement, MeasurementSelection],
+      evolutionSelection: SelectionBuilder[EvolutionChain, EvolutionSelection],
+      baseStatsSelection: SelectionBuilder[BaseStats, BaseStatsSelection]
+    ): ViewSelection[AbilitiesSelection, MeasurementSelection, EvolutionSelection, BaseStatsSelection] =
+      (id ~ name ~ moves ~ types ~ abilities(abilitiesSelection) ~ measurement(
+        measurementSelection
+      ) ~ isMonoType ~ entry(entryLanguage, entryVersion) ~ sprite ~ evolution(
+        evolutionSelection
+      ) ~ weaknesses ~ baseStats(baseStatsSelection)).map {
+        case (
+              id,
+              name,
+              moves,
+              types,
+              abilities,
+              measurement,
+              isMonoType,
+              entry,
+              sprite,
+              evolution,
+              weaknesses,
+              baseStats
+            ) =>
+          PokemonView(
+            id,
+            name,
+            moves,
+            types,
+            abilities,
+            measurement,
+            isMonoType,
+            entry,
+            sprite,
+            evolution,
+            weaknesses,
+            baseStats
+          )
+      }
 
     /** Pokemon's id, can match pokedex number (not always).
       */
@@ -341,6 +492,11 @@ object PokedexSchema {
       */
     def weaknesses: SelectionBuilder[Pokemon, scala.Option[List[scala.Option[PokemonType]]]] =
       _root_.caliban.client.SelectionBuilder.Field("weaknesses", OptionOf(ListOf(OptionOf(Scalar()))))
+
+    /** Pokemon's base stats
+      */
+    def baseStats[A](innerSelection: SelectionBuilder[BaseStats, A]): SelectionBuilder[Pokemon, scala.Option[A]] =
+      _root_.caliban.client.SelectionBuilder.Field("baseStats", OptionOf(Obj(innerSelection)))
   }
 
   type Query = _root_.caliban.client.Operations.RootQuery
