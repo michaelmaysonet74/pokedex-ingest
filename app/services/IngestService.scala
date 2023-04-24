@@ -23,7 +23,11 @@ class IngestServiceImpl(
   ec: ExecutionContext
 ) extends IngestService {
 
-  override def ingest(start: Int, end: Int, operation: Option[IngestOperation]): Future[Boolean] =
+  override def ingest(
+    start: Int,
+    end: Int,
+    operation: Option[IngestOperation]
+  ): Future[Boolean] =
     operation match {
       case Some(IngestOperation.UpdateBaseStats) => updateBatchPokemonBaseStatsById(start, end)
       case _                                     => insertBatchPokemonById(start, end)
