@@ -18,7 +18,7 @@ class PokedexRepo(
       .insertOne(pokemon)
       .toFuture()
       .map(_ => true)
-      .fallbackTo(Future.successful(false))
+      .recover { case _ => false }
 
   def updateBaseStats(
     pokemon: PokemonRecord
@@ -32,8 +32,14 @@ class PokedexRepo(
           )
           .toFuture()
           .map(_ => true)
-          .fallbackTo(Future.successful(false))
+          .recover { case _ => false }
       }
       .getOrElse(Future.successful(false))
+
+  def getEvolvedPokemon: Future[Seq[PokemonRecord]] =
+    db.pokemon
+      .find(filter = notEqual("evolution.from", null))
+      .toFuture()
+      .recover { case _ => Seq.empty }
 
 }

@@ -3,7 +3,8 @@ package models
 import com.rallyhealth.weepickle.v1.WeePickle.{macroTo, To}
 
 final case class EvolutionChain(
-  from: Option[Evolution]
+  from: Option[Evolution],
+  to: Option[Seq[Evolution]] = None
 )
 
 object EvolutionChain {
