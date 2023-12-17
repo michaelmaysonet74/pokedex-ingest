@@ -1,13 +1,13 @@
 package services
 
-import models.Evolution
+import models.{Evolution, PokemonRecord, UpdateEvolutionsResult}
 import repositories.PokedexRepo
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait EvolutionService {
 
-  def updateEvolutions(): Future[Boolean]
+  def updateEvolutions(): Future[UpdateEvolutionsResult]
 
 }
 
@@ -22,25 +22,37 @@ class EvolutionServiceImpl(
     to: Evolution
   )
 
-  // TODO: Finish impl
-  override def updateEvolutions(): Future[Boolean] =
-    pokedexRepo.getEvolvedPokemon.map { evolvedPokemon =>
-      val groupedByFromEvolutionsTo = evolvedPokemon
-        .map { pokemon =>
-          EvolutionChain(
-            from = pokemon.evolution.flatMap(_.from),
-            to = Evolution(
-              id = Some(pokemon.id.toString),
-              name = pokemon.name
-            )
-          )
-        }
-        .groupBy(_.from.flatMap(_.name))
-        .map { case (key, evolutions) =>
-          key -> evolutions.map(_.to)
-        }
-      println(groupedByFromEvolutionsTo.head)
-      true
-    }
+  override def updateEvolutions(): Future[UpdateEvolutionsResult] =
+    pokedexRepo
+      .getEvolvedPokemon()
+      .flatMap { evolvedPokemon =>
+        val evolutionsToByEvolutionsFrom =
+          evolvedPokemon
+            .map(convertEvolutionChain)
+            .groupMap(_.from.flatMap(_.name))(_.to)
+            .collect { case (Some(name), evolutionTo) => name -> evolutionTo }
+
+        Future
+          .traverse(evolutionsToByEvolutionsFrom.toSeq) { case (name, evolutionTo) =>
+            pokedexRepo.updateEvolutionTo(name, evolutionTo)
+          }
+      }
+      .map { results =>
+        UpdateEvolutionsResult(
+          success = results.foldLeft(true) { case (acc, result) => result && acc },
+          updateSize = results.size
+        )
+      }
+
+  private def convertEvolutionChain(
+    pokemon: PokemonRecord
+  ): EvolutionChain =
+    EvolutionChain(
+      from = pokemon.evolution.flatMap(_.from),
+      to = Evolution(
+        id = Some(pokemon.id.toString),
+        name = pokemon.name
+      )
+    )
 
 }

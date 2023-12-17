@@ -2,7 +2,7 @@ package controllers
 
 import com.rallyhealth.weejson.v1.jackson.ToJson
 import com.rallyhealth.weepickle.v1.WeePickle.FromScala
-import models.{IngestOperation, IngestResponse}
+import models.UpdateEvolutionsResponse
 import play.api.Logger
 import play.api.mvc.{AbstractController, Action, AnyContent, ControllerComponents}
 import services.EvolutionService
@@ -17,18 +17,20 @@ class EvolutionController(
   val logger: Logger
 ) extends AbstractController(cc) {
 
-  // TODO: Finish impl
-  def updateEvolutions(): Action[AnyContent] = Action.async {
-    evolutionService.updateEvolutions().map { _ =>
-      Ok(
-        FromScala(
-          IngestResponse(
-            success = true,
-            operation = IngestOperation.InsertAll
-          )
-        ).transform(ToJson.string)
-      ).as(JSON)
+  def updateEvolutions(): Action[AnyContent] =
+    Action.async {
+      evolutionService
+        .updateEvolutions()
+        .map { result =>
+          Ok(
+            FromScala(
+              UpdateEvolutionsResponse(
+                success = result.success,
+                updateSize = result.updateSize
+              )
+            ).transform(ToJson.string)
+          ).as(JSON)
+        }
     }
-  }
 
 }
