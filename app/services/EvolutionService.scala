@@ -7,7 +7,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait EvolutionService {
 
-  def updateEvolutions(): Future[UpdateEvolutionsResult]
+  def updateEvolutions(
+    maybePokemonName: Option[String]
+  ): Future[UpdateEvolutionsResult]
 
 }
 
@@ -22,27 +24,29 @@ class EvolutionServiceImpl(
     to: Evolution
   )
 
-  override def updateEvolutions(): Future[UpdateEvolutionsResult] =
-    pokedexRepo
-      .getEvolvedPokemon()
-      .flatMap { evolvedPokemon =>
-        val evolutionsToByEvolutionsFrom =
-          evolvedPokemon
-            .map(convertEvolutionChain)
-            .groupMap(_.from.flatMap(_.name))(_.to)
-            .collect { case (Some(name), evolutionTo) => name -> evolutionTo }
+  override def updateEvolutions(
+    maybePokemonName: Option[String]
+  ): Future[UpdateEvolutionsResult] =
+    for {
+      evolvedPokemon <- maybePokemonName match {
+        case None       => pokedexRepo.getEvolvedPokemon()
+        case Some(name) => pokedexRepo.getEvolvedPokemonByName(name)
+      }
 
-        Future
-          .traverse(evolutionsToByEvolutionsFrom.toSeq) { case (name, evolutionTo) =>
-            pokedexRepo.updateEvolutionTo(name, evolutionTo)
-          }
+      evolutionsToByEvolutionsFrom =
+        evolvedPokemon
+          .map(convertEvolutionChain)
+          .groupMap(_.from.flatMap(_.name))(_.to)
+          .collect { case (Some(name), evolutionTo) => name -> evolutionTo }
+
+      results <- Future.traverse(evolutionsToByEvolutionsFrom.toSeq) { case (name, evolutionTo) =>
+        pokedexRepo.updateEvolutionTo(name, evolutionTo)
       }
-      .map { results =>
-        UpdateEvolutionsResult(
-          success = results.foldLeft(true) { case (acc, result) => result && acc },
-          updateSize = results.size
-        )
-      }
+    } yield {
+      val updateSize = results.iterator.size
+      val success = if (updateSize == 0) false else results.iterator.forall(identity)
+      UpdateEvolutionsResult(success, updateSize)
+    }
 
   private def convertEvolutionChain(
     pokemon: PokemonRecord
