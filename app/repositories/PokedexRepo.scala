@@ -76,18 +76,14 @@ class PokedexRepoImpl(
       .recover { case _ => false }
 
   override def getEvolvedPokemon(): Future[Seq[PokemonRecord]] =
-    getEvolvedPokemon(
-      filter = notEqual("evolution.from", null)
-    )
+    get(filter = notEqual("evolution.from", null))
 
   override def getEvolvedPokemonByName(
     name: String
   ): Future[Seq[PokemonRecord]] =
-    getEvolvedPokemon(
-      filter = equal("evolution.from.name", name)
-    )
+    get(filter = equal("evolution.from.name", name))
 
-  private def getEvolvedPokemon(
+  private def get(
     filter: Bson
   ): Future[Seq[PokemonRecord]] =
     db.pokemon
