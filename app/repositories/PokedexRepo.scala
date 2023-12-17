@@ -29,7 +29,7 @@ trait PokedexRepo {
 class PokedexRepoImpl(
   db: MongoDbClient
 )(implicit
-  ec: ExecutionContextq
+  ec: ExecutionContext
 ) extends PokedexRepo {
 
   override def insert(
