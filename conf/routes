@@ -3,4 +3,6 @@
 # https://www.playframework.com/documentation/latest/ScalaRouting
 # ~~~~
 
-POST     /rest/ingest   controllers.IngestController.ingest()
+POST    /rest/ingest       controllers.IngestController.ingest()
+
+PUT     /rest/evolutions   controllers.EvolutionController.updateEvolutions()

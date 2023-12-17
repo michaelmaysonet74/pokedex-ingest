@@ -38,7 +38,8 @@ class IngestController(
               ).transform(ToJson.string)
             ).as(JSON)
           }
-      case _ => Future.successful(BadRequest)
+      case _ =>
+        Future.successful(BadRequest)
     }
   }
 

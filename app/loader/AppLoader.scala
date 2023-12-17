@@ -1,7 +1,7 @@
 package loader
 
 import com.softwaremill.macwire.wire
-import modules.IngestModule
+import modules.{EvolutionModule, IngestModule}
 import play.api.ApplicationLoader.Context
 import play.api._
 import play.api.libs.ws.ahc.AhcWSComponents
@@ -27,7 +27,8 @@ class AppComponents(
 ) extends BuiltInComponentsFromContext(context)
     with AhcWSComponents
     with HttpFiltersComponents
-    with IngestModule {
+    with IngestModule
+    with EvolutionModule {
 
   implicit lazy val ec: ExecutionContext = actorSystem.dispatcher
   implicit lazy val logger: Logger = Logger("application")

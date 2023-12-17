@@ -152,7 +152,7 @@ object PokedexClient {
   import scala.sys.env
 
   private val pokedexUri =
-    env.getOrElse("POKEDEX_URI", "http://localhost:4001/graphql")
+    env.getOrElse("POKEDEX_URI", "http://localhost:4000/graphql")
 
   private def convert(pokemonType: SchemaPokemonType): PokemonType =
     pokemonType match {
