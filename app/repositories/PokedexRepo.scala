@@ -2,7 +2,8 @@ package repositories
 
 import clients.MongoDbClient
 import models.{Evolution, PokemonRecord}
-import org.mongodb.scala.model.Filters.{equal, notEqual}
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.Filters.{and, equal, notEqual}
 import org.mongodb.scala.model.Updates.set
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,12 +18,16 @@ trait PokedexRepo {
     pokemon: PokemonRecord
   ): Future[Boolean]
 
-  def getEvolvedPokemon(): Future[Seq[PokemonRecord]]
-
   def updateEvolutionTo(
     evolutionFromName: String,
     evolutionTo: Seq[Evolution]
   ): Future[Boolean]
+
+  def getEvolvedPokemon(): Future[Seq[PokemonRecord]]
+
+  def getEvolvedPokemonByName(
+    name: String
+  ): Future[Seq[PokemonRecord]]
 
 }
 
@@ -57,12 +62,6 @@ class PokedexRepoImpl(
       }
       .getOrElse(Future.successful(false))
 
-  override def getEvolvedPokemon(): Future[Seq[PokemonRecord]] =
-    db.pokemon
-      .find(filter = notEqual("evolution.from", null))
-      .toFuture()
-      .recover { case _ => Seq.empty }
-
   override def updateEvolutionTo(
     evolutionFromName: String,
     evolutionTo: Seq[Evolution]
@@ -75,5 +74,21 @@ class PokedexRepoImpl(
       .toFuture()
       .map(_ => true)
       .recover { case _ => false }
+
+  override def getEvolvedPokemon(): Future[Seq[PokemonRecord]] =
+    get(filter = notEqual("evolution.from", null))
+
+  override def getEvolvedPokemonByName(
+    name: String
+  ): Future[Seq[PokemonRecord]] =
+    get(filter = equal("evolution.from.name", name))
+
+  private def get(
+    filter: Bson
+  ): Future[Seq[PokemonRecord]] =
+    db.pokemon
+      .find(filter)
+      .toFuture()
+      .recover { case _ => Seq.empty }
 
 }
