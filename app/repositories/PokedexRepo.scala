@@ -3,7 +3,7 @@ package repositories
 import clients.MongoDbClient
 import models.{Evolution, PokemonRecord}
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.Filters.{and, equal, notEqual}
+import org.mongodb.scala.model.Filters.{equal, notEqual}
 import org.mongodb.scala.model.Updates.set
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,6 +19,10 @@ trait PokedexRepo {
   ): Future[Boolean]
 
   def updateCategory(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean]
+
+  def updateEntry(
     pokemonRecord: PokemonRecord
   ): Future[Boolean]
 
@@ -55,14 +59,10 @@ class PokedexRepoImpl(
   ): Future[Boolean] =
     pokemon.baseStats
       .map { baseStats =>
-        db.pokemon
-          .updateOne(
-            filter = equal("id", pokemon.id),
-            update = set("baseStats", baseStats)
-          )
-          .toFuture()
-          .map(_ => true)
-          .recover { case _ => false }
+        update(
+          filter = equal("id", pokemon.id),
+          update = set("baseStats", baseStats)
+        )
       }
       .getOrElse(Future.successful(false))
 
@@ -71,14 +71,22 @@ class PokedexRepoImpl(
   ): Future[Boolean] =
     pokemon.category
       .map { category =>
-        db.pokemon
-          .updateOne(
-            filter = equal("id", pokemon.id),
-            update = set("category", category)
-          )
-          .toFuture()
-          .map(_ => true)
-          .recover { case _ => false }
+        update(
+          filter = equal("id", pokemon.id),
+          update = set("category", category)
+        )
+      }
+      .getOrElse(Future.successful(false))
+
+  override def updateEntry(
+    pokemon: PokemonRecord
+  ): Future[Boolean] =
+    pokemon.entry
+      .map { entry =>
+        update(
+          filter = equal("id", pokemon.id),
+          update = set("entry", entry)
+        )
       }
       .getOrElse(Future.successful(false))
 
@@ -86,14 +94,10 @@ class PokedexRepoImpl(
     evolutionFromName: String,
     evolutionTo: Seq[Evolution]
   ): Future[Boolean] =
-    db.pokemon
-      .updateOne(
-        filter = equal("name", evolutionFromName),
-        update = set("evolution.to", evolutionTo)
-      )
-      .toFuture()
-      .map(_ => true)
-      .recover { case _ => false }
+    update(
+      filter = equal("name", evolutionFromName),
+      update = set("evolution.to", evolutionTo)
+    )
 
   override def getEvolvedPokemon(): Future[Seq[PokemonRecord]] =
     get(filter = notEqual("evolution.from", null))
@@ -110,5 +114,15 @@ class PokedexRepoImpl(
       .find(filter)
       .toFuture()
       .recover { case _ => Seq.empty }
+
+  private def update(
+    filter: Bson,
+    update: Bson
+  ): Future[Boolean] =
+    db.pokemon
+      .updateOne(filter, update)
+      .toFuture()
+      .map(_ => true)
+      .recover { case _ => false }
 
 }
