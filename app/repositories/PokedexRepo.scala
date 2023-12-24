@@ -18,6 +18,10 @@ trait PokedexRepo {
     pokemon: PokemonRecord
   ): Future[Boolean]
 
+  def updateCategory(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean]
+
   def updateEvolutionTo(
     evolutionFromName: String,
     evolutionTo: Seq[Evolution]
@@ -55,6 +59,22 @@ class PokedexRepoImpl(
           .updateOne(
             filter = equal("id", pokemon.id),
             update = set("baseStats", baseStats)
+          )
+          .toFuture()
+          .map(_ => true)
+          .recover { case _ => false }
+      }
+      .getOrElse(Future.successful(false))
+
+  override def updateCategory(
+    pokemon: PokemonRecord
+  ): Future[Boolean] =
+    pokemon.category
+      .map { category =>
+        db.pokemon
+          .updateOne(
+            filter = equal("id", pokemon.id),
+            update = set("category", category)
           )
           .toFuture()
           .map(_ => true)
