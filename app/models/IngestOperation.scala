@@ -12,6 +12,7 @@ object IngestOperation extends Enum[IngestOperation] {
   case object InsertAll extends IngestOperation("InsertAll")
   case object UpdateBaseStats extends IngestOperation("UpdateBaseStats")
   case object UpdateCategory extends IngestOperation("UpdateCategory")
+  case object UpdateEntry extends IngestOperation("UpdateEntry")
 
   implicit val decoder: FromTo[IngestOperation] = fromTo[String].bimap[IngestOperation](_.value, withNameInsensitive)
 
