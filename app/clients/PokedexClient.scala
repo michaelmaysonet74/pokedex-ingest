@@ -55,6 +55,7 @@ class PokedexClient(
           SchemaPokemon.id ~
             SchemaPokemon.name ~
             SchemaPokemon.entry() ~
+            SchemaPokemon.category() ~
             SchemaPokemon.types ~
             SchemaPokemon.measurement(
               SchemaMeasurement.height ~
@@ -81,6 +82,7 @@ class PokedexClient(
                   id,
                   name,
                   entry,
+                  category,
                   types,
                   measurement,
                   abilities,
@@ -94,6 +96,7 @@ class PokedexClient(
                 id = id,
                 name = name,
                 entry = entry,
+                category = category,
                 types = types.map(_.map(_.map(convert))),
                 measurement = measurement.map { case (height, weight) => Measurement(height, weight) },
                 abilities = abilities.map(_.map(_.map { case (name, effect, isHidden) =>

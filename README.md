@@ -14,3 +14,8 @@ $ sbt run
 # (Server started, use Enter to stop and go back to the console...)
 
 ```
+
+### Generate Schema Types from SDL
+```bash
+$ sbt calibanGenClient [SDL schema path] app/clients/schema/PokedexSchema.scala
+```

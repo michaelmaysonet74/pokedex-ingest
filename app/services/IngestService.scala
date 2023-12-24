@@ -30,6 +30,7 @@ class IngestServiceImpl(
   ): Future[Boolean] =
     operation match {
       case Some(IngestOperation.UpdateBaseStats) => updateBatchPokemonBaseStatsById(start, end)
+      case Some(IngestOperation.UpdateCategory)  => updateBatchPokemonCategoryById(start, end)
       case _                                     => insertBatchPokemonById(start, end)
     }
 
@@ -46,6 +47,15 @@ class IngestServiceImpl(
     getBatchPokemonById(start, end, getPokemonBaseStatsById).flatMap { pokemons =>
       Future
         .sequence(pokemons.map(convert).map(pokedexRepo.updateBaseStats))
+        .map { results =>
+          results.foldLeft(true) { case (acc, c) => acc && c }
+        }
+    }
+
+  private def updateBatchPokemonCategoryById(start: Int, end: Int): Future[Boolean] =
+    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
+      Future
+        .sequence(pokemons.map(convert).map(pokedexRepo.updateCategory))
         .map { results =>
           results.foldLeft(true) { case (acc, c) => acc && c }
         }
@@ -74,6 +84,7 @@ class IngestServiceImpl(
       id = pokemonById.id.toInt,
       name = pokemonById.name,
       entry = pokemonById.entry,
+      category = pokemonById.category,
       types = pokemonById.types.map(_.collect { case Some(pokemonType) => pokemonType.value }),
       measurement = pokemonById.measurement,
       abilities = pokemonById.abilities.map(_.collect { case Some(ability) => ability }),
