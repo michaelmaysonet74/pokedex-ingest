@@ -66,7 +66,7 @@ object PokemonRecord {
       case id if 650 to 721 contains id  => Some(6)
       case id if 722 to 809 contains id  => Some(7)
       case id if 810 to 905 contains id  => Some(8)
-      case id if 906 to 1017 contains id => Some(9)
+      case id if 906 to 1025 contains id => Some(9)
       case _                             => None
     }
 
