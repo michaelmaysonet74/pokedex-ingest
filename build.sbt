@@ -1,6 +1,6 @@
-import Dependencies._
-import play.sbt.PlayImport.PlayKeys._
-import com.typesafe.sbt.packager.docker._
+import Dependencies.*
+import play.sbt.PlayImport.PlayKeys.*
+import com.typesafe.sbt.packager.docker.*
 
 ThisBuild / scalaVersion := "2.13.8"
 ThisBuild / version := "1.0.0"
@@ -22,6 +22,11 @@ lazy val root = (project in file("."))
       ws
     ),
     playDefaultPort := 9000
+  )
+  .settings(
+    Compile / caliban / calibanSettings += calibanSetting(file("pokedex-schema.graphql"))(
+      _.clientName("PokedexSchema").packageName("clients.schemas")
+    )
   )
   .settings(
     dockerExposedPorts ++= Seq(9000),

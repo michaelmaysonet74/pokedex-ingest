@@ -1,6 +1,5 @@
 package models
 
-import com.rallyhealth.weepickle.v1.WeePickle.{fromTo, FromTo}
 import enumeratum._
 
 sealed abstract class PokemonType(val value: String) extends EnumEntry
@@ -27,7 +26,5 @@ object PokemonType extends Enum[PokemonType] {
   case object Rock extends PokemonType("Rock")
   case object Steel extends PokemonType("Steel")
   case object Water extends PokemonType("Water")
-
-  implicit val decoder: FromTo[PokemonType] = fromTo[String].bimap[PokemonType](_.value, withNameInsensitive)
 
 }

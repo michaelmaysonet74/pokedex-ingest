@@ -1,17 +1,7 @@
 package models
 
-import com.rallyhealth.weepickle.v1.WeePickle.{macroTo, To}
-
-final case class EvolutionChain(
-  from: Option[Evolution],
-  to: Option[Seq[Evolution]] = None
-)
-
-object EvolutionChain {
-
-  implicit val decoder: To[EvolutionChain] = macroTo[EvolutionChain]
-
-}
+import caliban.client.SelectionBuilder
+import clients.schemas.PokedexSchema
 
 final case class Evolution(
   id: Option[String],
@@ -20,6 +10,10 @@ final case class Evolution(
 
 object Evolution {
 
-  implicit val decoder: To[Evolution] = macroTo[Evolution]
+  val fragment: SelectionBuilder[PokedexSchema.EvolutionFrom, Evolution] =
+    (
+      PokedexSchema.EvolutionFrom.id ~
+        PokedexSchema.EvolutionFrom.name
+    ).map { case (id, name) => Evolution(id, name) }
 
 }
