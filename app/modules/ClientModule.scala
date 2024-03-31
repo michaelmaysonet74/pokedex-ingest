@@ -2,7 +2,6 @@ package modules
 
 import clients.MongoDbClient
 import com.softwaremill.macwire.wire
-import play.api.libs.ws.WSClient
 
 import scala.concurrent.ExecutionContext
 

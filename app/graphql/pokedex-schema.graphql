@@ -1,0 +1,163 @@
+type Ability {
+    name: String
+    effect(language: Language): String
+    isHidden: Boolean
+}
+
+"""Represents the base stats of a Pokemon."""
+type BaseStats {
+    """Pokemon's base HP"""
+    hp: Int!
+
+    """Pokemon's base Attack"""
+    attack: Int!
+
+    """Pokemon's base Defense"""
+    defense: Int!
+
+    """Pokemon's base Special Attack"""
+    specialAttack: Int!
+
+    """Pokemon's base Special Defense"""
+    specialDefense: Int!
+
+    """Pokemon's base Speed"""
+    speed: Int!
+}
+
+"""Represents a Pokemon Evolution"""
+interface Evolution {
+    """Pokemon's id, can match pokedex number (not always)."""
+    id: ID
+
+    """Pokemon's name"""
+    name: String
+}
+
+"""Represents a Pokemon which it evolves from."""
+type EvolutionFrom implements Evolution {
+    """Pokemon's id, can match pokedex number (not always)."""
+    id: ID
+
+    """Pokemon's name"""
+    name: String
+}
+
+"""Represents a Pokemon Evolution chain."""
+type EvolutionChain {
+    """Represents a Pokemon which it evolves from in the chain."""
+    from: EvolutionFrom
+}
+
+"""Represents the measurement of a given entity."""
+type Measurement {
+    """Entity's height"""
+    height: String
+
+    """Entity's weight"""
+    weight: String
+}
+
+"""Main line Pokemon game versions."""
+enum GameVersion {
+    red
+    blue
+    yellow
+    gold
+    silver
+    crystal
+    ruby
+    sapphire
+    emerald
+    diamond
+    pearl
+    platinum
+    black
+    white
+    x
+    y
+    sun
+    moon
+    sword
+    shield
+    scarlet
+    violet
+}
+
+"""Supported languages."""
+enum Language {
+    en
+    es
+}
+
+"""All available Pokemon types."""
+enum PokemonType {
+    Bug
+    Dark
+    Dragon
+    Electric
+    Fairy
+    Fighting
+    Fire
+    Flying
+    Ghost
+    Grass
+    Ground
+    Ice
+    Normal
+    Poison
+    Psychic
+    Rock
+    Steel
+    Water
+}
+
+"""Represents the details of a Pokemon."""
+type Pokemon {
+    """Pokemon's id, can match pokedex number (not always)."""
+    id: ID!
+
+    """Pokemon's name"""
+    name: String
+
+    """List of moves that this Pokemon can learn."""
+    moves: [String]
+
+    """List of types that this Pokemon has, should not be more than two."""
+    types: [PokemonType]
+
+    """List of abilieties this Pokemon can have."""
+    abilities: [Ability]
+
+    """Pokemon's measurement"""
+    measurement: Measurement
+
+    """Determines if Pokemon only have one type or not."""
+    isMonoType: Boolean
+
+    """Pokedex flavor text entries for this Pokemon."""
+    entry(language: Language, version: GameVersion): String
+
+    """URL of Pokemon's sprite"""
+    sprite: String
+
+    """Pokemon's evolution chain"""
+    evolution: EvolutionChain
+
+    """List of types that this Pokemon is weak against."""
+    weaknesses: [PokemonType]
+
+    """Pokemon's base stats"""
+    baseStats: BaseStats
+
+    """Pokemon's category"""
+    category(language: Language): String
+}
+
+type Query {
+    """Returns the details of a pokemon by the provided id."""
+    pokemonById(id: ID!): Pokemon
+
+    """Returns the details of a pokemon by the provided name."""
+    pokemonByName(name: String!): Pokemon
+}
