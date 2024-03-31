@@ -12,7 +12,9 @@ trait GraphQLClient {
 
   def execute[T](
     query: SelectionBuilder[RootQuery, Option[T]]
-  )(implicit uri: String): Future[Option[T]] =
+  )(implicit
+    uri: String
+  ): Future[Option[T]] =
     query
       .toRequest(uri"$uri")
       .send(HttpClientFutureBackend())
