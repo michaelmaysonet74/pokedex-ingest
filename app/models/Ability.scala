@@ -1,6 +1,7 @@
 package models
 
-import com.rallyhealth.weepickle.v1.WeePickle.{macroTo, To}
+import caliban.client.SelectionBuilder
+import clients.schemas.PokedexSchema
 
 final case class Ability(
   name: Option[String],
@@ -10,6 +11,11 @@ final case class Ability(
 
 object Ability {
 
-  implicit val decoder: To[Ability] = macroTo[Ability]
+  val fragment: SelectionBuilder[PokedexSchema.Ability, Ability] =
+    (
+      PokedexSchema.Ability.name ~
+        PokedexSchema.Ability.effect() ~
+        PokedexSchema.Ability.isHidden
+    ).map { case (name, effect, isHidden) => Ability(name, effect, isHidden) }
 
 }

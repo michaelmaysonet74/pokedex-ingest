@@ -1,7 +1,7 @@
 package services
 
 import clients.PokedexClient
-import models.{IngestOperation, PokemonById, PokemonRecord}
+import models.{IngestOperation, PokemonBaseStatsById, PokemonById, PokemonRecord}
 import repositories.PokedexRepo
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,6 +22,8 @@ class IngestServiceImpl(
 )(implicit
   ec: ExecutionContext
 ) extends IngestService {
+
+  import IngestServiceImpl._
 
   override def ingest(
     start: Int,
@@ -71,11 +73,11 @@ class IngestServiceImpl(
         }
     }
 
-  private def getBatchPokemonById(
+  private def getBatchPokemonById[T](
     start: Int,
     end: Int,
-    fetch: Int => Future[Option[PokemonById]]
-  ): Future[List[PokemonById]] =
+    fetch: Int => Future[Option[T]]
+  ): Future[List[T]] =
     Future.sequence((start to end).map(fetch).toList).map { batchPokemonById =>
       for {
         maybePokemonById <- batchPokemonById
@@ -86,8 +88,12 @@ class IngestServiceImpl(
   private def getPokemonById(id: Int): Future[Option[PokemonById]] =
     pokedexClient.getPokemonById(id.toString)
 
-  private def getPokemonBaseStatsById(id: Int): Future[Option[PokemonById]] =
+  private def getPokemonBaseStatsById(id: Int): Future[Option[PokemonBaseStatsById]] =
     pokedexClient.getPokemonBaseStatsById(id.toString)
+
+}
+
+object IngestServiceImpl {
 
   private def convert(pokemonById: PokemonById): PokemonRecord =
     PokemonRecord(
@@ -102,6 +108,12 @@ class IngestServiceImpl(
       evolution = pokemonById.evolution,
       isMonoType = pokemonById.isMonoType,
       weaknesses = pokemonById.weaknesses.map(_.collect { case Some(weakness) => weakness.value }),
+      baseStats = pokemonById.baseStats
+    )
+
+  private def convert(pokemonById: PokemonBaseStatsById): PokemonRecord =
+    PokemonRecord(
+      id = pokemonById.id.toInt,
       baseStats = pokemonById.baseStats
     )
 

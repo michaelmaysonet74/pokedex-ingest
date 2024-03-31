@@ -9,18 +9,18 @@ import org.mongodb.scala.bson.ObjectId
 final case class PokemonRecord(
   _id: ObjectId,
   id: Int,
-  name: Option[String],
-  entry: Option[String],
-  category: Option[String],
-  types: Option[List[String]],
-  measurement: Option[Measurement],
-  abilities: Option[List[Ability]],
-  sprite: Option[String],
-  evolution: Option[EvolutionChain],
-  isMonoType: Boolean,
-  weaknesses: Option[List[String]],
-  generation: Option[Int],
-  baseStats: Option[BaseStats]
+  name: Option[String] = None,
+  entry: Option[String] = None,
+  category: Option[String] = None,
+  types: Option[List[String]] = None,
+  measurement: Option[Measurement] = None,
+  abilities: Option[List[Ability]] = None,
+  sprite: Option[String] = None,
+  evolution: Option[EvolutionChain] = None,
+  isMonoType: Boolean = false,
+  weaknesses: Option[List[String]] = None,
+  generation: Option[Int] = None,
+  baseStats: Option[BaseStats] = None
 )
 
 object PokemonRecord {
@@ -53,6 +53,16 @@ object PokemonRecord {
       isMonoType = isMonoType.getOrElse(false),
       weaknesses = weaknesses,
       generation = getGeneration(id),
+      baseStats = baseStats
+    )
+
+  def apply(
+    id: Int,
+    baseStats: Option[BaseStats]
+  ): PokemonRecord =
+    PokemonRecord(
+      _id = new ObjectId(),
+      id = id,
       baseStats = baseStats
     )
 

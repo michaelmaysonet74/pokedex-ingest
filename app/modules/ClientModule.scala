@@ -10,8 +10,6 @@ trait ClientModule {
 
   implicit def ec: ExecutionContext
 
-  def wsClient: WSClient
-
   lazy val db: MongoDbClient = wire[MongoDbClient]
 
 }

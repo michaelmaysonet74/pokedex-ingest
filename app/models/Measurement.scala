@@ -1,6 +1,7 @@
 package models
 
-import com.rallyhealth.weepickle.v1.WeePickle.{macroTo, To}
+import caliban.client.SelectionBuilder
+import clients.schemas.PokedexSchema
 
 final case class Measurement(
   height: Option[String],
@@ -9,6 +10,10 @@ final case class Measurement(
 
 object Measurement {
 
-  implicit val decoder: To[Measurement] = macroTo[Measurement]
+  val fragment: SelectionBuilder[PokedexSchema.Measurement, Measurement] =
+    (
+      PokedexSchema.Measurement.height ~
+        PokedexSchema.Measurement.weight
+    ).map { case (height, weight) => Measurement(height, weight) }
 
 }

@@ -1,7 +1,5 @@
 package models
 
-import com.rallyhealth.weepickle.v1.WeePickle.{macroTo, To}
-
 final case class PokemonById(
   id: String,
   name: Option[String],
@@ -17,26 +15,7 @@ final case class PokemonById(
   baseStats: Option[BaseStats]
 )
 
-object PokemonById {
-
-  implicit val decoder: To[PokemonById] = macroTo[PokemonById]
-
-  def apply(
-    id: String,
-    baseStats: Option[BaseStats]
-  ): PokemonById = PokemonById(
-    id = id,
-    name = None,
-    entry = None,
-    category = None,
-    types = None,
-    measurement = None,
-    abilities = None,
-    sprite = None,
-    evolution = None,
-    isMonoType = None,
-    weaknesses = None,
-    baseStats = baseStats
-  )
-
-}
+final case class PokemonBaseStatsById(
+  id: String,
+  baseStats: Option[BaseStats]
+)

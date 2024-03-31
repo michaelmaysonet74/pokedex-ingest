@@ -2,51 +2,17 @@ package clients
 
 import caliban.client.Operations.RootQuery
 import caliban.client.SelectionBuilder
-import clients.schemas.PokedexSchema.{
-  Ability => SchemaAbility,
-  BaseStats => SchemaBaseStats,
-  EvolutionChain => SchemaEvolutionChain,
-  EvolutionFrom => SchemaEvolutionFrom,
-  Measurement => SchemaMeasurement,
-  Pokemon => SchemaPokemon,
-  PokemonType => SchemaPokemonType,
-  Query
-}
-import com.rallyhealth.weejson.v1.jackson.FromJson
-import com.rallyhealth.weepickle.v1.WeePickle.ToScala
-import models.{
-  Ability,
-  BaseStats,
-  Evolution,
-  EvolutionChain,
-  Measurement,
-  PokemonById,
-  PokemonByIdResponse,
-  PokemonType
-}
-import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
-import sttp.client3.UriContext
+import clients.schemas.PokedexSchema.{Pokemon => SchemaPokemon, PokemonType => SchemaPokemonType, Query}
+import models.{Ability, BaseStats, EvolutionChain, Measurement, PokemonBaseStatsById, PokemonById, PokemonType}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
 
 class PokedexClient(
-  ws: WSClient
 )(implicit
-  ec: ExecutionContext
-) {
+  val ec: ExecutionContext
+) extends GraphQLClient {
 
   import clients.PokedexClient._
-
-  private val baseStatsFragment = SchemaPokemon.baseStats(
-    SchemaBaseStats.hp ~
-      SchemaBaseStats.attack ~
-      SchemaBaseStats.defense ~
-      SchemaBaseStats.specialAttack ~
-      SchemaBaseStats.specialDefense ~
-      SchemaBaseStats.speed
-  )
 
   def getPokemonById(id: String): Future[Option[PokemonById]] = {
     val query: SelectionBuilder[RootQuery, Option[PokemonById]] =
@@ -57,105 +23,76 @@ class PokedexClient(
             SchemaPokemon.entry() ~
             SchemaPokemon.category() ~
             SchemaPokemon.types ~
-            SchemaPokemon.measurement(
-              SchemaMeasurement.height ~
-                SchemaMeasurement.weight
-            ) ~
-            SchemaPokemon.abilities(
-              SchemaAbility.name ~
-                SchemaAbility.effect() ~
-                SchemaAbility.isHidden
-            ) ~
+            SchemaPokemon.measurement {
+              Measurement.fragment
+            } ~
+            SchemaPokemon.abilities {
+              Ability.fragment
+            } ~
             SchemaPokemon.sprite ~
-            SchemaPokemon.evolution(
-              SchemaEvolutionChain.from(
-                SchemaEvolutionFrom.id ~
-                  SchemaEvolutionFrom.name
-              )
-            ) ~
+            SchemaPokemon.evolution {
+              EvolutionChain.fragment
+            } ~
             SchemaPokemon.isMonoType ~
             SchemaPokemon.weaknesses ~
-            baseStatsFragment
-        )
-          .map {
-            case (
-                  id,
-                  name,
-                  entry,
-                  category,
-                  types,
-                  measurement,
-                  abilities,
-                  sprite,
-                  evolution,
-                  isMonoType,
-                  weaknesses,
-                  baseStats
-                ) =>
-              PokemonById(
-                id = id,
-                name = name,
-                entry = entry,
-                category = category,
-                types = types.map(_.map(_.map(convert))),
-                measurement = measurement.map { case (height, weight) => Measurement(height, weight) },
-                abilities = abilities.map(_.map(_.map { case (name, effect, isHidden) =>
-                  Ability(name, effect, isHidden)
-                })),
-                sprite = sprite,
-                evolution = evolution.flatMap(_.map { case (id, name) =>
-                  EvolutionChain(from = Some(Evolution(id, name)))
-                }),
-                isMonoType = isMonoType,
-                weaknesses = weaknesses.map(_.map(_.map(convert))),
-                baseStats = baseStats.map(convert)
-              )
-          }
-      }
-
-    executeQuery(query)
-  }
-
-  def getPokemonBaseStatsById(id: String): Future[Option[PokemonById]] = {
-    val query: SelectionBuilder[RootQuery, Option[PokemonById]] =
-      Query.pokemonById(id) {
-        (SchemaPokemon.id ~ baseStatsFragment)
-          .map { case (id, baseStats) =>
+            SchemaPokemon.baseStats {
+              BaseStats.fragment
+            }
+        ).map {
+          case (
+                id,
+                name,
+                entry,
+                category,
+                types,
+                measurement,
+                abilities,
+                sprite,
+                evolution,
+                isMonoType,
+                weaknesses,
+                baseStats
+              ) =>
             PokemonById(
               id = id,
-              baseStats = baseStats.map(convert)
+              name = name,
+              entry = entry,
+              category = category,
+              types = types.map(_.map(_.map(convert))),
+              measurement = measurement,
+              abilities = abilities,
+              sprite = sprite,
+              evolution = evolution,
+              isMonoType = isMonoType,
+              weaknesses = weaknesses.map(_.map(_.map(convert))),
+              baseStats = baseStats
             )
-          }
+        }
       }
-
-    executeQuery(query)
+    execute(query)
   }
 
-  private def executeQuery(
-    query: SelectionBuilder[RootQuery, Option[PokemonById]]
-  ): Future[Option[PokemonById]] = {
-    val request = query.toRequest(uri"$pokedexUri")
-    val data = Json.parse(request.body.show.replaceFirst("string: ", ""))
-
-    ws.url(request.uri.toString()).post(data).map { response =>
-      val tryPokemonById =
-        FromJson(response.body).validate[PokemonByIdResponse](ToScala[PokemonByIdResponse])
-
-      tryPokemonById match {
-        case Success(pokemonByIdResponse) => Some(pokemonByIdResponse.data.pokemonById)
-        case _                            => None
+  def getPokemonBaseStatsById(id: String): Future[Option[PokemonBaseStatsById]] = {
+    val query: SelectionBuilder[RootQuery, Option[PokemonBaseStatsById]] =
+      Query.pokemonById(id) {
+        (
+          SchemaPokemon.id ~
+            SchemaPokemon.baseStats {
+              BaseStats.fragment
+            }
+        ).mapN(PokemonBaseStatsById)
       }
-    }
+    execute(query)
   }
 
 }
 
 object PokedexClient {
 
-  import scala.sys.env
-
-  private val pokedexUri =
+  private implicit val pokedexUri: String = {
+    import scala.sys.env
     env.getOrElse("POKEDEX_URI", "http://localhost:4000/graphql")
+  }
 
   private def convert(pokemonType: SchemaPokemonType): PokemonType =
     pokemonType match {
@@ -178,19 +115,5 @@ object PokedexClient {
       case SchemaPokemonType.Steel    => PokemonType.Steel
       case SchemaPokemonType.Water    => PokemonType.Water
     }
-
-  private def convert(
-    baseStats: (Int, Int, Int, Int, Int, Int)
-  ): BaseStats = {
-    val (hp, attack, defense, specialAttack, specialDefense, speed) = baseStats
-    BaseStats(
-      hp,
-      attack,
-      defense,
-      specialAttack,
-      specialDefense,
-      speed
-    )
-  }
 
 }

@@ -1,6 +1,7 @@
 package models
 
-import com.rallyhealth.weepickle.v1.WeePickle.{macroTo, To}
+import caliban.client.SelectionBuilder
+import clients.schemas.PokedexSchema
 
 final case class BaseStats(
   hp: Int,
@@ -13,6 +14,31 @@ final case class BaseStats(
 
 object BaseStats {
 
-  implicit val decoder: To[BaseStats] = macroTo[BaseStats]
+  val fragment: SelectionBuilder[PokedexSchema.BaseStats, BaseStats] =
+    (
+      PokedexSchema.BaseStats.hp ~
+        PokedexSchema.BaseStats.attack ~
+        PokedexSchema.BaseStats.defense ~
+        PokedexSchema.BaseStats.specialAttack ~
+        PokedexSchema.BaseStats.specialDefense ~
+        PokedexSchema.BaseStats.speed
+    ).map {
+      case (
+            hp,
+            attack,
+            defense,
+            specialAttack,
+            specialDefense,
+            speed
+          ) =>
+        BaseStats(
+          hp,
+          attack,
+          defense,
+          specialAttack,
+          specialDefense,
+          speed
+        )
+    }
 
 }
