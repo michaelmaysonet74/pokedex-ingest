@@ -8,7 +8,7 @@ final case class PokemonById(
   name: Option[String],
   entry: Option[String],
   category: Option[String],
-  types: Option[List[Option[PokemonType]]],
+  types: Option[PokemonTypes],
   measurement: Option[Measurement],
   abilities: Option[List[Option[Ability]]],
   sprite: Option[String],
@@ -25,7 +25,9 @@ object PokemonById {
       PokedexSchema.Pokemon.name ~
       PokedexSchema.Pokemon.entry() ~
       PokedexSchema.Pokemon.category() ~
-      PokedexSchema.Pokemon.types ~
+      PokedexSchema.Pokemon.types {
+        PokemonTypes.fragment
+      } ~
       PokedexSchema.Pokemon.measurement {
         Measurement.fragment
       } ~
@@ -61,37 +63,15 @@ object PokemonById {
         name = name,
         entry = entry,
         category = category,
-        types = types.map(_.map(_.map(convert))),
+        types = types,
         measurement = measurement,
         abilities = abilities,
         sprite = sprite,
         evolution = evolution,
         isMonoType = isMonoType,
-        weaknesses = weaknesses.map(_.map(_.map(convert))),
+        weaknesses = weaknesses.map(_.map(_.map(PokemonType.convert))),
         baseStats = baseStats
       )
   }
-
-  private def convert(pokemonType: PokedexSchema.PokemonType): PokemonType =
-    pokemonType match {
-      case PokedexSchema.PokemonType.Bug      => PokemonType.Bug
-      case PokedexSchema.PokemonType.Dark     => PokemonType.Dark
-      case PokedexSchema.PokemonType.Dragon   => PokemonType.Dragon
-      case PokedexSchema.PokemonType.Electric => PokemonType.Electric
-      case PokedexSchema.PokemonType.Fairy    => PokemonType.Fairy
-      case PokedexSchema.PokemonType.Fighting => PokemonType.Fighting
-      case PokedexSchema.PokemonType.Fire     => PokemonType.Fire
-      case PokedexSchema.PokemonType.Flying   => PokemonType.Flying
-      case PokedexSchema.PokemonType.Ghost    => PokemonType.Ghost
-      case PokedexSchema.PokemonType.Grass    => PokemonType.Grass
-      case PokedexSchema.PokemonType.Ground   => PokemonType.Ground
-      case PokedexSchema.PokemonType.Ice      => PokemonType.Ice
-      case PokedexSchema.PokemonType.Normal   => PokemonType.Normal
-      case PokedexSchema.PokemonType.Poison   => PokemonType.Poison
-      case PokedexSchema.PokemonType.Psychic  => PokemonType.Psychic
-      case PokedexSchema.PokemonType.Rock     => PokemonType.Rock
-      case PokedexSchema.PokemonType.Steel    => PokemonType.Steel
-      case PokedexSchema.PokemonType.Water    => PokemonType.Water
-    }
 
 }

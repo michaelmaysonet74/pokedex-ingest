@@ -101,7 +101,7 @@ object IngestServiceImpl {
       name = pokemonById.name,
       entry = pokemonById.entry,
       category = pokemonById.category,
-      types = pokemonById.types.map(_.collect { case Some(pokemonType) => pokemonType.value }),
+      types = pokemonById.types,
       measurement = pokemonById.measurement,
       abilities = pokemonById.abilities.map(_.collect { case Some(ability) => ability }),
       sprite = pokemonById.sprite,
