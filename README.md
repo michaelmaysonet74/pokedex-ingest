@@ -1,4 +1,4 @@
-# poke-dex-ingest
+# pokedex-ingest
 Pokedex GraphQL API to MongoDB Ingestion Job
 
 ## Getting Started
