@@ -35,6 +35,10 @@ trait PokedexRepo {
     pokemonRecord: PokemonRecord
   ): Future[Boolean]
 
+  def updateWeight(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean]
+
   def getEvolvedPokemon(): Future[Seq[PokemonRecord]]
 
   def getEvolvedPokemonByName(
@@ -113,6 +117,19 @@ class PokedexRepoImpl(
       } yield update(
         filter = equal("id", pokemonRecord.id),
         update = set("measurement.height", height)
+      )
+    ).getOrElse(Future.successful(false))
+
+  override def updateWeight(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean] =
+    (
+      for {
+        measurement <- pokemonRecord.measurement
+        weight <- measurement.weight
+      } yield update(
+        filter = equal("id", pokemonRecord.id),
+        update = set("measurement.weight", weight)
       )
     ).getOrElse(Future.successful(false))
 
