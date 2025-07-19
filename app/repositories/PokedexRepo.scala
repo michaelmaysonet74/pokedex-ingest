@@ -31,6 +31,10 @@ trait PokedexRepo {
     evolutionTo: Seq[Evolution]
   ): Future[Boolean]
 
+  def updateHeight(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean]
+
   def getEvolvedPokemon(): Future[Seq[PokemonRecord]]
 
   def getEvolvedPokemonByName(
@@ -98,6 +102,19 @@ class PokedexRepoImpl(
       filter = equal("name", evolutionFromName),
       update = set("evolution.to", evolutionTo)
     )
+
+  override def updateHeight(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean] =
+    (
+      for {
+        measurement <- pokemonRecord.measurement
+        height <- measurement.height
+      } yield update(
+        filter = equal("id", pokemonRecord.id),
+        update = set("measurement.height", height)
+      )
+    ).getOrElse(Future.successful(false))
 
   override def getEvolvedPokemon(): Future[Seq[PokemonRecord]] =
     get(filter = notEqual("evolution.from", null))
