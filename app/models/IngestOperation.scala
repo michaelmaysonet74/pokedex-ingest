@@ -14,6 +14,7 @@ object IngestOperation extends Enum[IngestOperation] {
   case object UpdateCategory extends IngestOperation("UpdateCategory")
   case object UpdateEntry extends IngestOperation("UpdateEntry")
   case object UpdateHeight extends IngestOperation("UpdateHeight")
+  case object UpdateWeight extends IngestOperation("UpdateWeight")
 
   implicit val decoder: FromTo[IngestOperation] = fromTo[String].bimap[IngestOperation](_.value, withNameInsensitive)
 

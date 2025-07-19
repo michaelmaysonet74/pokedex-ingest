@@ -19,25 +19,34 @@ class IngestController(
   val logger: Logger
 ) extends AbstractController(cc) {
 
+  private val BATCH_SIZE_LIMIT = 100
+
   def ingest(): Action[JsValue] = Action.async(parse.json) { implicit request =>
     FromJson(request.body.toString).validate[IngestRequest](ToScala[IngestRequest]) match {
       case Success(ingestRequest) =>
-        ingestService
-          .ingest(
-            start = ingestRequest.startPokemonId,
-            end = ingestRequest.endPokemonId.getOrElse(ingestRequest.startPokemonId),
-            operation = ingestRequest.operation
+        if (ingestRequest.endPokemonId.getOrElse(0) - ingestRequest.startPokemonId > BATCH_SIZE_LIMIT)
+          Future.successful(
+            BadRequest(
+              s"The range from startPokemonId to endPokemonId exceeds the limit of $BATCH_SIZE_LIMIT in total."
+            )
           )
-          .map { success =>
-            Ok(
-              FromScala(
-                IngestResponse(
-                  success = success,
-                  operation = ingestRequest.operation.getOrElse(IngestOperation.InsertAll)
-                )
-              ).transform(ToJson.string)
-            ).as(JSON)
-          }
+        else
+          ingestService
+            .ingest(
+              start = ingestRequest.startPokemonId,
+              end = ingestRequest.endPokemonId.getOrElse(ingestRequest.startPokemonId),
+              operation = ingestRequest.operation
+            )
+            .map { success =>
+              Ok(
+                FromScala(
+                  IngestResponse(
+                    success = success,
+                    operation = ingestRequest.operation.getOrElse(IngestOperation.InsertAll)
+                  )
+                ).transform(ToJson.string)
+              ).as(JSON)
+            }
       case _ =>
         Future.successful(BadRequest)
     }
