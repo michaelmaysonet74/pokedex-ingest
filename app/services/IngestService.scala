@@ -31,12 +31,14 @@ class IngestServiceImpl(
     operation: Option[IngestOperation]
   ): Future[Boolean] =
     operation match {
-      case Some(IngestOperation.UpdateBaseStats) => updateBatchPokemonBaseStatsById(start, end)
-      case Some(IngestOperation.UpdateCategory)  => updateBatchPokemonCategoryById(start, end)
-      case Some(IngestOperation.UpdateEntry)     => updateBatchPokemonEntryById(start, end)
-      case Some(IngestOperation.UpdateHeight)    => updateBatchPokemonHeightById(start, end)
-      case Some(IngestOperation.UpdateWeight)    => updateBatchPokemonWeightById(start, end)
-      case _                                     => insertBatchPokemonById(start, end)
+      case Some(IngestOperation.UpdateBaseStats)   => updateBatchPokemonBaseStatsById(start, end)
+      case Some(IngestOperation.UpdateCategory)    => updateBatchPokemonCategoryById(start, end)
+      case Some(IngestOperation.UpdateEntry)       => updateBatchPokemonEntryById(start, end)
+      case Some(IngestOperation.UpdateHeight)      => updateBatchPokemonHeightById(start, end)
+      case Some(IngestOperation.UpdateWeight)      => updateBatchPokemonWeightById(start, end)
+      case Some(IngestOperation.UpdateImmunities)  => updateBatchPokemonImmunitiesById(start, end)
+      case Some(IngestOperation.UpdateResistances) => updateBatchPokemonResistancesById(start, end)
+      case _                                       => insertBatchPokemonById(start, end)
     }
 
   private def insertBatchPokemonById(start: Int, end: Int): Future[Boolean] =
@@ -93,6 +95,24 @@ class IngestServiceImpl(
         }
     }
 
+  private def updateBatchPokemonImmunitiesById(start: Int, end: Int): Future[Boolean] =
+    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
+      Future
+        .sequence(pokemons.map(convert).map(pokedexRepo.updateImmunities))
+        .map { results =>
+          results.foldLeft(true) { case (acc, c) => acc && c }
+        }
+    }
+
+  private def updateBatchPokemonResistancesById(start: Int, end: Int): Future[Boolean] =
+    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
+      Future
+        .sequence(pokemons.map(convert).map(pokedexRepo.updateResistances))
+        .map { results =>
+          results.foldLeft(true) { case (acc, c) => acc && c }
+        }
+    }
+
   private def getBatchPokemonById[T](
     start: Int,
     end: Int,
@@ -127,6 +147,8 @@ object IngestServiceImpl {
       sprite = pokemonById.sprite,
       evolution = pokemonById.evolution,
       isMonoType = pokemonById.isMonoType,
+      immunities = pokemonById.immunities.map(_.collect { case Some(immunity) => immunity.value }),
+      resistances = pokemonById.resistances.map(_.collect { case Some(resistance) => resistance.value }),
       weaknesses = pokemonById.weaknesses.map(_.collect { case Some(weakness) => weakness.value }),
       baseStats = pokemonById.baseStats
     )

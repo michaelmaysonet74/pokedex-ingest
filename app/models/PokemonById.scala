@@ -14,6 +14,8 @@ final case class PokemonById(
   sprite: Option[String],
   evolution: Option[EvolutionChain],
   isMonoType: Option[Boolean],
+  immunities: Option[List[Option[PokemonType]]],
+  resistances: Option[List[Option[PokemonType]]],
   weaknesses: Option[List[Option[PokemonType]]],
   baseStats: Option[BaseStats]
 )
@@ -39,6 +41,8 @@ object PokemonById {
         EvolutionChain.fragment
       } ~
       PokedexSchema.Pokemon.isMonoType ~
+      PokedexSchema.Pokemon.immunities ~
+      PokedexSchema.Pokemon.resistances ~
       PokedexSchema.Pokemon.weaknesses ~
       PokedexSchema.Pokemon.baseStats {
         BaseStats.fragment
@@ -55,6 +59,8 @@ object PokemonById {
           sprite,
           evolution,
           isMonoType,
+          immunities,
+          resistances,
           weaknesses,
           baseStats
         ) =>
@@ -69,6 +75,8 @@ object PokemonById {
         sprite = sprite,
         evolution = evolution,
         isMonoType = isMonoType,
+        immunities = immunities.map(_.map(_.map(PokemonType.convert))),
+        resistances = resistances.map(_.map(_.map(PokemonType.convert))),
         weaknesses = weaknesses.map(_.map(_.map(PokemonType.convert))),
         baseStats = baseStats
       )

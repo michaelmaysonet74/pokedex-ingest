@@ -39,6 +39,14 @@ trait PokedexRepo {
     pokemonRecord: PokemonRecord
   ): Future[Boolean]
 
+  def updateImmunities(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean]
+
+  def updateResistances(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean]
+
   def getEvolvedPokemon(): Future[Seq[PokemonRecord]]
 
   def getEvolvedPokemonByName(
@@ -132,6 +140,30 @@ class PokedexRepoImpl(
         update = set("measurement.weight", weight)
       )
     ).getOrElse(Future.successful(false))
+
+  override def updateImmunities(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean] =
+    pokemonRecord.immunities
+      .map { immunities =>
+        update(
+          filter = equal("id", pokemonRecord.id),
+          update = set("immunities", immunities)
+        )
+      }
+      .getOrElse(Future.successful(false))
+
+  override def updateResistances(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean] =
+    pokemonRecord.resistances
+      .map { resistances =>
+        update(
+          filter = equal("id", pokemonRecord.id),
+          update = set("resistances", resistances)
+        )
+      }
+      .getOrElse(Future.successful(false))
 
   override def getEvolvedPokemon(): Future[Seq[PokemonRecord]] =
     get(filter = notEqual("evolution.from", null))
