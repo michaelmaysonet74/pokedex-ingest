@@ -68,13 +68,13 @@ class IngestServiceImpl(
         case pokemonBaseStatsById: PokemonBaseStatsById =>
           convertPokemonBaseStatsById(pokemonBaseStatsById)
       }
-      
+
       Future
         .sequence(pokemonRecords.map(operation))
         .map { results =>
           results.foldLeft(true) { case (acc, c) => acc && c }
         }
-        .map(IngestResult(_, count = pokemonRecords.size))
+        .map(IngestResult(_, count = pokemonRecords.length))
     }
 
   private def getBatchPokemonById[T](
