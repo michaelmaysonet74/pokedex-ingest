@@ -3,7 +3,7 @@ package clients
 import caliban.client.Operations.RootQuery
 import caliban.client.SelectionBuilder
 import clients.schemas.PokedexSchema.Query
-import models.{PokemonBaseStatsById, PokemonById}
+import models.{PokemonBaseStatsById, PokemonById, PokemonTypeChartById}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,6 +27,14 @@ class PokedexClient(
     val query: SelectionBuilder[RootQuery, Option[PokemonBaseStatsById]] =
       Query.pokemonById(id) {
         PokemonBaseStatsById.fragment
+      }
+    execute(query)
+  }
+
+  def getPokemonTypeChartById(id: String): Future[Option[models.PokemonTypeChartById]] = {
+    val query: SelectionBuilder[RootQuery, Option[models.PokemonTypeChartById]] =
+      Query.pokemonById(id) {
+        PokemonTypeChartById.fragment
       }
     execute(query)
   }

@@ -18,6 +18,8 @@ final case class PokemonRecord(
   sprite: Option[String] = None,
   evolution: Option[EvolutionChain] = None,
   isMonoType: Boolean = false,
+  immunities: Option[List[String]] = None,
+  resistances: Option[List[String]] = None,
   weaknesses: Option[List[String]] = None,
   generation: Option[Int] = None,
   baseStats: Option[BaseStats] = None
@@ -36,6 +38,8 @@ object PokemonRecord {
     sprite: Option[String],
     evolution: Option[EvolutionChain],
     isMonoType: Option[Boolean],
+    immunities: Option[List[String]],
+    resistances: Option[List[String]],
     weaknesses: Option[List[String]],
     baseStats: Option[BaseStats]
   ): PokemonRecord =
@@ -51,6 +55,8 @@ object PokemonRecord {
       sprite = sprite,
       evolution = evolution,
       isMonoType = isMonoType.getOrElse(false),
+      immunities = immunities,
+      resistances = resistances,
       weaknesses = weaknesses,
       generation = getGeneration(id),
       baseStats = baseStats
@@ -64,6 +70,20 @@ object PokemonRecord {
       _id = new ObjectId(),
       id = id,
       baseStats = baseStats
+    )
+
+  def apply(
+    id: Int,
+    immunities: Option[List[String]],
+    resistances: Option[List[String]],
+    weaknesses: Option[List[String]]
+  ): PokemonRecord =
+    PokemonRecord(
+      _id = new ObjectId(),
+      id = id,
+      immunities = immunities,
+      resistances = resistances,
+      weaknesses = weaknesses
     )
 
   private def getGeneration(pokemonId: Int): Option[Int] =

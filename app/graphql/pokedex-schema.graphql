@@ -152,7 +152,13 @@ type Pokemon {
     """Pokemon's evolution chain"""
     evolution: EvolutionChain
 
-    """List of types that this Pokemon is weak against."""
+    "List of types that this Pokemon is immune to."
+    immunities: [PokemonType]
+
+    "List of types that this Pokemon resist."
+    resistances: [PokemonType]
+
+    """List of types that this Pokemon is weak to."""
     weaknesses: [PokemonType]
 
     """Pokemon's base stats"""

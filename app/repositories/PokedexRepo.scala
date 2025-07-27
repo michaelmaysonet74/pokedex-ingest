@@ -4,7 +4,7 @@ import clients.MongoDbClient
 import models.{Evolution, PokemonRecord}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters.{equal, notEqual}
-import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.model.Updates.{combine, set}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,6 +36,10 @@ trait PokedexRepo {
   ): Future[Boolean]
 
   def updateWeight(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean]
+
+  def updateTypeChart(
     pokemonRecord: PokemonRecord
   ): Future[Boolean]
 
@@ -130,6 +134,24 @@ class PokedexRepoImpl(
       } yield update(
         filter = equal("id", pokemonRecord.id),
         update = set("measurement.weight", weight)
+      )
+    ).getOrElse(Future.successful(false))
+
+  override def updateTypeChart(
+    pokemonRecord: PokemonRecord
+  ): Future[Boolean] =
+    (
+      for {
+        immunities <- pokemonRecord.immunities
+        resistances <- pokemonRecord.resistances
+        weaknesses <- pokemonRecord.weaknesses
+      } yield update(
+        filter = equal("id", pokemonRecord.id),
+        update = combine(
+          set("immunities", immunities),
+          set("resistances", resistances),
+          set("weaknesses", weaknesses)
+        )
       )
     ).getOrElse(Future.successful(false))
 
