@@ -65,7 +65,7 @@ class IngestServiceImpl(
 
         case pokemonBaseStatsById: PokemonBaseStatsById =>
           convertPokemonBaseStatsById(pokemonBaseStatsById)
-          
+
         case pokemonTypeChartById: PokemonTypeChartById =>
           convertPokemonTypeChartById(pokemonTypeChartById)
       }
