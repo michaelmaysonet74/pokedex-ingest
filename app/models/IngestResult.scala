@@ -1,6 +1,6 @@
 package models
 
-case class IngestResult(
+final case class IngestResult(
   success: Boolean,
   count: Int
 )

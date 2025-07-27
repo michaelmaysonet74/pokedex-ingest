@@ -72,6 +72,20 @@ object PokemonRecord {
       baseStats = baseStats
     )
 
+  def apply(
+    id: Int,
+    immunities: Option[List[String]],
+    resistances: Option[List[String]],
+    weaknesses: Option[List[String]]
+  ): PokemonRecord =
+    PokemonRecord(
+      _id = new ObjectId(),
+      id = id,
+      immunities = immunities,
+      resistances = resistances,
+      weaknesses = weaknesses
+    )
+
   private def getGeneration(pokemonId: Int): Option[Int] =
     pokemonId match {
       case id if 1 to 151 contains id    => Some(1)

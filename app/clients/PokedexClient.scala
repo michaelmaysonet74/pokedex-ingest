@@ -31,4 +31,12 @@ class PokedexClient(
     execute(query)
   }
 
+  def getPokemonTypeChartById(id: String): Future[Option[models.PokemonTypeChartById]] = {
+    val query: SelectionBuilder[RootQuery, Option[models.PokemonTypeChartById]] =
+      Query.pokemonById(id) {
+        models.PokemonTypeChartById.fragment
+      }
+    execute(query)
+  }
+
 }

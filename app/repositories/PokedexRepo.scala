@@ -4,7 +4,7 @@ import clients.MongoDbClient
 import models.{Evolution, PokemonRecord}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Filters.{equal, notEqual}
-import org.mongodb.scala.model.Updates.set
+import org.mongodb.scala.model.Updates.{combine, set}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,11 +39,7 @@ trait PokedexRepo {
     pokemonRecord: PokemonRecord
   ): Future[Boolean]
 
-  def updateImmunities(
-    pokemonRecord: PokemonRecord
-  ): Future[Boolean]
-
-  def updateResistances(
+  def updateTypeChart(
     pokemonRecord: PokemonRecord
   ): Future[Boolean]
 
@@ -141,29 +137,23 @@ class PokedexRepoImpl(
       )
     ).getOrElse(Future.successful(false))
 
-  override def updateImmunities(
+  override def updateTypeChart(
     pokemonRecord: PokemonRecord
   ): Future[Boolean] =
-    pokemonRecord.immunities
-      .map { immunities =>
-        update(
-          filter = equal("id", pokemonRecord.id),
-          update = set("immunities", immunities)
+    (
+      for {
+        immunities <- pokemonRecord.immunities
+        resistances <- pokemonRecord.resistances
+        weaknesses <- pokemonRecord.weaknesses
+      } yield update(
+        filter = equal("id", pokemonRecord.id),
+        update = combine(
+          set("immunities", immunities),
+          set("resistances", resistances),
+          set("weaknesses", weaknesses)
         )
-      }
-      .getOrElse(Future.successful(false))
-
-  override def updateResistances(
-    pokemonRecord: PokemonRecord
-  ): Future[Boolean] =
-    pokemonRecord.resistances
-      .map { resistances =>
-        update(
-          filter = equal("id", pokemonRecord.id),
-          update = set("resistances", resistances)
-        )
-      }
-      .getOrElse(Future.successful(false))
+      )
+    ).getOrElse(Future.successful(false))
 
   override def getEvolvedPokemon(): Future[Seq[PokemonRecord]] =
     get(filter = notEqual("evolution.from", null))

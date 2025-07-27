@@ -1,7 +1,7 @@
 package services
 
 import clients.PokedexClient
-import models.{IngestOperation, IngestResult, PokemonBaseStatsById, PokemonById, PokemonRecord}
+import models.{IngestOperation, IngestResult, PokemonBaseStatsById, PokemonById, PokemonRecord, PokemonTypeChartById}
 import repositories.PokedexRepo
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,11 +46,8 @@ class IngestServiceImpl(
       case Some(IngestOperation.UpdateWeight) =>
         processBatchOperation(start, end, getPokemonById, pokedexRepo.updateWeight)
 
-      case Some(IngestOperation.UpdateImmunities) =>
-        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateImmunities)
-
-      case Some(IngestOperation.UpdateResistances) =>
-        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateResistances)
+      case Some(IngestOperation.UpdateTypeChart) =>
+        processBatchOperation(start, end, getPokemonTypeChartById, pokedexRepo.updateTypeChart)
 
       case _ => processBatchOperation(start, end, getPokemonById, pokedexRepo.insert)
     }
@@ -65,8 +62,12 @@ class IngestServiceImpl(
       val pokemonRecords = pokemon.map {
         case pokemonById: PokemonById =>
           convertPokemonById(pokemonById)
+
         case pokemonBaseStatsById: PokemonBaseStatsById =>
           convertPokemonBaseStatsById(pokemonBaseStatsById)
+          
+        case pokemonTypeChartById: PokemonTypeChartById =>
+          convertPokemonTypeChartById(pokemonTypeChartById)
       }
 
       Future
@@ -95,6 +96,9 @@ class IngestServiceImpl(
   private def getPokemonBaseStatsById(id: Int): Future[Option[PokemonBaseStatsById]] =
     pokedexClient.getPokemonBaseStatsById(id.toString)
 
+  private def getPokemonTypeChartById(id: Int): Future[Option[PokemonTypeChartById]] =
+    pokedexClient.getPokemonTypeChartById(id.toString)
+
 }
 
 object IngestServiceImpl {
@@ -121,6 +125,14 @@ object IngestServiceImpl {
     PokemonRecord(
       id = pokemonById.id.toInt,
       baseStats = pokemonById.baseStats
+    )
+
+  private def convertPokemonTypeChartById(pokemonById: PokemonTypeChartById): PokemonRecord =
+    PokemonRecord(
+      id = pokemonById.id.toInt,
+      immunities = pokemonById.immunities.map(_.collect { case Some(immunity) => immunity.value }),
+      resistances = pokemonById.resistances.map(_.collect { case Some(resistance) => resistance.value }),
+      weaknesses = pokemonById.weaknesses.map(_.collect { case Some(weakness) => weakness.value })
     )
 
 }
