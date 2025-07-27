@@ -1,7 +1,7 @@
 package services
 
 import clients.PokedexClient
-import models.{IngestOperation, PokemonBaseStatsById, PokemonById, PokemonRecord}
+import models.{IngestOperation, IngestResult, PokemonBaseStatsById, PokemonById, PokemonRecord}
 import repositories.PokedexRepo
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -12,7 +12,7 @@ trait IngestService {
     start: Int,
     end: Int,
     operation: Option[IngestOperation]
-  ): Future[Boolean]
+  ): Future[IngestResult]
 
 }
 
@@ -29,88 +29,52 @@ class IngestServiceImpl(
     start: Int,
     end: Int,
     operation: Option[IngestOperation]
-  ): Future[Boolean] =
+  ): Future[IngestResult] =
     operation match {
-      case Some(IngestOperation.UpdateBaseStats)   => updateBatchPokemonBaseStatsById(start, end)
-      case Some(IngestOperation.UpdateCategory)    => updateBatchPokemonCategoryById(start, end)
-      case Some(IngestOperation.UpdateEntry)       => updateBatchPokemonEntryById(start, end)
-      case Some(IngestOperation.UpdateHeight)      => updateBatchPokemonHeightById(start, end)
-      case Some(IngestOperation.UpdateWeight)      => updateBatchPokemonWeightById(start, end)
-      case Some(IngestOperation.UpdateImmunities)  => updateBatchPokemonImmunitiesById(start, end)
-      case Some(IngestOperation.UpdateResistances) => updateBatchPokemonResistancesById(start, end)
-      case _                                       => insertBatchPokemonById(start, end)
+      case Some(IngestOperation.UpdateBaseStats) =>
+        processBatchOperation(start, end, getPokemonBaseStatsById, pokedexRepo.updateBaseStats)
+
+      case Some(IngestOperation.UpdateCategory) =>
+        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateCategory)
+
+      case Some(IngestOperation.UpdateEntry) =>
+        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateEntry)
+
+      case Some(IngestOperation.UpdateHeight) =>
+        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateHeight)
+
+      case Some(IngestOperation.UpdateWeight) =>
+        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateWeight)
+
+      case Some(IngestOperation.UpdateImmunities) =>
+        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateImmunities)
+
+      case Some(IngestOperation.UpdateResistances) =>
+        processBatchOperation(start, end, getPokemonById, pokedexRepo.updateResistances)
+
+      case _ => processBatchOperation(start, end, getPokemonById, pokedexRepo.insert)
     }
 
-  private def insertBatchPokemonById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
+  private def processBatchOperation[T](
+    start: Int,
+    end: Int,
+    fetch: Int => Future[Option[T]],
+    operation: PokemonRecord => Future[Boolean]
+  ): Future[IngestResult] =
+    getBatchPokemonById(start, end, fetch).flatMap { pokemon =>
+      val pokemonRecords = pokemon.map {
+        case pokemonById: PokemonById =>
+          convertPokemonById(pokemonById)
+        case pokemonBaseStatsById: PokemonBaseStatsById =>
+          convertPokemonBaseStatsById(pokemonBaseStatsById)
+      }
+      
       Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.insert))
+        .sequence(pokemonRecords.map(operation))
         .map { results =>
           results.foldLeft(true) { case (acc, c) => acc && c }
         }
-    }
-
-  private def updateBatchPokemonBaseStatsById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonBaseStatsById).flatMap { pokemons =>
-      Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.updateBaseStats))
-        .map { results =>
-          results.foldLeft(true) { case (acc, c) => acc && c }
-        }
-    }
-
-  private def updateBatchPokemonCategoryById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
-      Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.updateCategory))
-        .map { results =>
-          results.foldLeft(true) { case (acc, c) => acc && c }
-        }
-    }
-
-  private def updateBatchPokemonEntryById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
-      Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.updateEntry))
-        .map { results =>
-          results.foldLeft(true) { case (acc, c) => acc && c }
-        }
-    }
-
-  private def updateBatchPokemonHeightById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
-      Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.updateHeight))
-        .map { results =>
-          results.foldLeft(true) { case (acc, c) => acc && c }
-        }
-    }
-
-  private def updateBatchPokemonWeightById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
-      Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.updateWeight))
-        .map { results =>
-          results.foldLeft(true) { case (acc, c) => acc && c }
-        }
-    }
-
-  private def updateBatchPokemonImmunitiesById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
-      Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.updateImmunities))
-        .map { results =>
-          results.foldLeft(true) { case (acc, c) => acc && c }
-        }
-    }
-
-  private def updateBatchPokemonResistancesById(start: Int, end: Int): Future[Boolean] =
-    getBatchPokemonById(start, end, getPokemonById).flatMap { pokemons =>
-      Future
-        .sequence(pokemons.map(convert).map(pokedexRepo.updateResistances))
-        .map { results =>
-          results.foldLeft(true) { case (acc, c) => acc && c }
-        }
+        .map(IngestResult(_, count = pokemonRecords.size))
     }
 
   private def getBatchPokemonById[T](
@@ -135,7 +99,7 @@ class IngestServiceImpl(
 
 object IngestServiceImpl {
 
-  private def convert(pokemonById: PokemonById): PokemonRecord =
+  private def convertPokemonById(pokemonById: PokemonById): PokemonRecord =
     PokemonRecord(
       id = pokemonById.id.toInt,
       name = pokemonById.name,
@@ -153,7 +117,7 @@ object IngestServiceImpl {
       baseStats = pokemonById.baseStats
     )
 
-  private def convert(pokemonById: PokemonBaseStatsById): PokemonRecord =
+  private def convertPokemonBaseStatsById(pokemonById: PokemonBaseStatsById): PokemonRecord =
     PokemonRecord(
       id = pokemonById.id.toInt,
       baseStats = pokemonById.baseStats

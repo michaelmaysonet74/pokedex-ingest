@@ -37,11 +37,12 @@ class IngestController(
               end = ingestRequest.endPokemonId.getOrElse(ingestRequest.startPokemonId),
               operation = ingestRequest.operation
             )
-            .map { success =>
+            .map { result =>
               Ok(
                 FromScala(
                   IngestResponse(
-                    success = success,
+                    success = result.success,
+                    count = result.count,
                     operation = ingestRequest.operation.getOrElse(IngestOperation.InsertAll)
                   )
                 ).transform(ToJson.string)
