@@ -1,3 +1,5 @@
+# _NOTE:_ This project has been rewritten in Elixir; see the new implementation [here](https://github.com/michaelmaysonet74/pokedex-etl).
+
 # pokedex-ingest
 Pokedex GraphQL API to MongoDB Ingestion Job
 
